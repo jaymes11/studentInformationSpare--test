@@ -38,9 +38,34 @@ export const getAllUsers = async () => {
   return response.data;
 };
 
+export const getUserById = async (id) => {
+  const response = await api.get(`/users/${id}`);
+  return response.data;
+};
+
 export const getCurrentUser = async () => {
   const response = await api.get('/users/me');
   return response.data;
+};
+
+export const createUser = async (userData) => {
+  const response = await api.post('/users', userData);
+  return response.data;
+};
+
+export const updateUser = async (id, userData) => {
+  const response = await api.put(`/users/${id}`, userData);
+  return response.data;
+};
+
+export const deleteUser = async (id) => {
+  try {
+    const response = await api.delete(`/users/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('API deleteUser error:', error.response?.data || error.message);
+    throw error; // Re-throw the error to be handled by the component
+  }
 };
 
 // Student API calls

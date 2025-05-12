@@ -30,6 +30,13 @@ const Register = () => {
             layout="vertical"
           >
             <Form.Item
+              name="userId"
+              label="User ID"
+            >
+              <Input prefix={<UserOutlined />} placeholder="User ID (optional)" size="large" />
+            </Form.Item>
+
+            <Form.Item
               name="firstName"
               label="First Name"
               rules={[{ required: true, message: 'Please input your First Name!' }]}
@@ -120,4 +127,4 @@ const Register = () => {
   );
 };
 
-export default Register; 
+export default Register;

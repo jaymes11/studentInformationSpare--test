@@ -1,46 +1,32 @@
 import mongoose from 'mongoose';
 
 const studentSchema = new mongoose.Schema({
-  firstName: {
+  idNumber: {
     type: String,
     required: true,
-    trim: true
+    unique: true
+  },
+  firstName: {
+    type: String,
+    required: true
+  },
+  middleName: {
+    type: String
   },
   lastName: {
     type: String,
-    required: true,
-    trim: true
-  },
-  middleName: {
-    type: String,
-    trim: true
-  },
-  dateOfBirth: {
-    type: Date,
     required: true
-  },
-  gender: {
-    type: String,
-    required: true,
-    enum: ['Male', 'Female', 'Other']
   },
   course: {
     type: String,
-    required: true,
-    trim: true
+    required: true
   },
-  yearLevel: {
-    type: Number,
-    required: true,
-    min: 1
+  year: {
+    type: String,
+    required: true
   }
-}, {
-  timestamps: true
-});
+}, { timestamps: true });
 
-// Create index for faster queries
-studentSchema.index({ studentId: 1, email: 1 });
+const Student = mongoose.model("students-data", studentSchema);
 
-const Student = mongoose.model('Student', studentSchema);
-
-export default Student; 
+export default Student;

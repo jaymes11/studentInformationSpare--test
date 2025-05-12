@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Typography, 
   Button, 
@@ -7,17 +7,18 @@ import {
   Modal, 
   Form, 
   Input, 
-  DatePicker, 
   Select, 
   Popconfirm,
   message,
-  Card
+  Card,
+  Tag
 } from 'antd';
 import { 
   PlusOutlined, 
   EditOutlined, 
   DeleteOutlined,
-  SearchOutlined 
+  SearchOutlined,
+  FilterOutlined
 } from '@ant-design/icons';
 import { 
   getAllStudents, 
@@ -25,7 +26,6 @@ import {
   updateStudent,
   deleteStudent 
 } from '../services/api';
-import dayjs from 'dayjs';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -36,12 +36,14 @@ const StudentManagement = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [editingStudent, setEditingStudent] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef(null);
 
   // Fetch students on component mount
   useEffect(() => {
     fetchStudents();
   }, []);
-
   const fetchStudents = async () => {
     try {
       setLoading(true);
@@ -49,7 +51,7 @@ const StudentManagement = () => {
       setStudents(data);
     } catch (error) {
       console.error('Error fetching students:', error);
-      message.error('Failed to fetch students');
+      message.error('Failed to fetch students. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -60,16 +62,13 @@ const StudentManagement = () => {
     form.resetFields();
     setModalVisible(true);
   };
-
   const handleEditStudent = (student) => {
     setEditingStudent(student);
     form.setFieldsValue({
-      ...student,
-      dateOfBirth: student.dateOfBirth ? dayjs(student.dateOfBirth) : null
+      ...student
     });
     setModalVisible(true);
   };
-
   const handleDeleteStudent = async (id) => {
     try {
       await deleteStudent(id);
@@ -77,22 +76,91 @@ const StudentManagement = () => {
       fetchStudents();
     } catch (error) {
       console.error('Error deleting student:', error);
-      message.error('Failed to delete student');
+      if (error.response && error.response.data && error.response.data.message) {
+        message.error(error.response.data.message);
+      } else {
+        message.error('Failed to delete student. Please try again.');
+      }
     }
   };
-
   const handleModalCancel = () => {
     setModalVisible(false);
   };
+  
+  const handleSearch = (selectedKeys, confirm, dataIndex) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
 
+  const handleReset = (clearFilters) => {
+    clearFilters();
+    setSearchText('');
+  };
+
+  const getColumnSearchProps = (dataIndex, title) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters, close }) => (
+      <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+        <Input
+          ref={searchInput}
+          placeholder={`Search ${title}`}
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Search
+          </Button>
+          <Button
+            onClick={() => clearFilters && handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            Reset
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            onClick={() => {
+              close();
+            }}
+          >
+            Close
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered) => (
+      <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+    ),
+    onFilter: (value, record) => {
+      if (dataIndex === 'name') {
+        const fullName = `${record.firstName} ${record.middleName || ''} ${record.lastName}`.toLowerCase();
+        return fullName.includes(value.toLowerCase());
+      }
+      
+      return record[dataIndex]
+        ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
+        : '';
+    },
+    onFilterDropdownOpenChange: (visible) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+  });
+  
   const handleModalSubmit = async () => {
     try {
       const values = await form.validateFields();
-      
-      // Format date
-      if (values.dateOfBirth) {
-        values.dateOfBirth = values.dateOfBirth.toISOString();
-      }
       
       if (editingStudent) {
         // Update existing student
@@ -108,10 +176,20 @@ const StudentManagement = () => {
       fetchStudents();
     } catch (error) {
       console.error('Form submission error:', error);
+      if (error.response && error.response.data && error.response.data.message) {
+        message.error(error.response.data.message);
+      } else if (!error.errorFields) {
+        // Only show generic error if it's not a form validation error
+        message.error('Failed to save student. Please check your inputs and try again.');
+      }
     }
-  };
-
-  const columns = [
+  };  const columns = [
+    {
+      title: 'ID Number',
+      dataIndex: 'idNumber',
+      key: 'idNumber',
+      ...getColumnSearchProps('idNumber', 'ID Number'),
+    },
     {
       title: 'Name',
       key: 'name',
@@ -121,27 +199,26 @@ const StudentManagement = () => {
         </span>
       ),
       sorter: (a, b) => a.lastName.localeCompare(b.lastName),
-    },
-    {
-      title: 'Date of Birth',
-      dataIndex: 'dateOfBirth',
-      key: 'dateOfBirth',
-      render: (date) => date ? new Date(date).toLocaleDateString() : '-',
-    },
-    {
-      title: 'Gender',
-      dataIndex: 'gender',
-      key: 'gender',
+      ...getColumnSearchProps('name', 'Name'),
     },
     {
       title: 'Course',
       dataIndex: 'course',
       key: 'course',
+      ...getColumnSearchProps('course', 'Course'),
     },
     {
-      title: 'Year Level',
-      dataIndex: 'yearLevel',
-      key: 'yearLevel',
+      title: 'Year',
+      dataIndex: 'year',
+      key: 'year',
+      filters: [
+        { text: '1st Year', value: '1st Year' },
+        { text: '2nd Year', value: '2nd Year' },
+        { text: '3rd Year', value: '3rd Year' },
+        { text: '4th Year', value: '4th Year' },
+        { text: '5th Year', value: '5th Year' },
+      ],
+      onFilter: (value, record) => record.year === value,
     },
     {
       title: 'Actions',
@@ -183,15 +260,18 @@ const StudentManagement = () => {
         >
           Add Student
         </Button>
-      </div>
-
-      <Card>
-        <Table 
+      </div>      <Card>        <Table 
           columns={columns} 
           dataSource={students} 
           rowKey="_id"
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50'],
+            showTotal: (total) => `Total ${total} students`
+          }}
+          rowClassName={() => 'table-row-hover'}
         />
       </Card>
 
@@ -202,12 +282,18 @@ const StudentManagement = () => {
         onCancel={handleModalCancel}
         onOk={handleModalSubmit}
         width={600}
-      >
-        <Form 
+      >        <Form 
           form={form} 
           layout="vertical"
-          initialValues={{ gender: 'Male' }}
         >
+          <Form.Item
+            name="idNumber"
+            label="ID Number"
+            rules={[{ required: true, message: 'Please enter ID Number' }]}
+          >
+            <Input placeholder="Student ID Number" />
+          </Form.Item>
+          
           <Form.Item
             name="firstName"
             label="First Name"
@@ -232,26 +318,6 @@ const StudentManagement = () => {
           </Form.Item>
 
           <Form.Item
-            name="dateOfBirth"
-            label="Date of Birth"
-            rules={[{ required: true, message: 'Please select date of birth' }]}
-          >
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
-
-          <Form.Item
-            name="gender"
-            label="Gender"
-            rules={[{ required: true, message: 'Please select gender' }]}
-          >
-            <Select placeholder="Select Gender">
-              <Option value="Male">Male</Option>
-              <Option value="Female">Female</Option>
-              <Option value="Other">Other</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
             name="course"
             label="Course"
             rules={[{ required: true, message: 'Please enter course' }]}
@@ -260,16 +326,16 @@ const StudentManagement = () => {
           </Form.Item>
 
           <Form.Item
-            name="yearLevel"
-            label="Year Level"
-            rules={[{ required: true, message: 'Please enter year level' }]}
+            name="year"
+            label="Year"
+            rules={[{ required: true, message: 'Please enter year' }]}
           >
-            <Select placeholder="Select Year Level">
-              <Option value={1}>1st Year</Option>
-              <Option value={2}>2nd Year</Option>
-              <Option value={3}>3rd Year</Option>
-              <Option value={4}>4th Year</Option>
-              <Option value={5}>5th Year</Option>
+            <Select placeholder="Select Year">
+              <Option value="1st Year">1st Year</Option>
+              <Option value="2nd Year">2nd Year</Option>
+              <Option value="3rd Year">3rd Year</Option>
+              <Option value="4th Year">4th Year</Option>
+              <Option value="5th Year">5th Year</Option>
             </Select>
           </Form.Item>
         </Form>

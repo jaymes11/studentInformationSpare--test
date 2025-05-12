@@ -6,7 +6,7 @@ const router = express.Router();
 // Register a new user
 router.post('/register', async (req, res) => {
   try {
-    const { firstName, lastName, middleName, email, password } = req.body;
+    const { firstName, lastName, middleName, email, password, userId } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -16,6 +16,7 @@ router.post('/register', async (req, res) => {
 
     // Create new user
     const newUser = new User({
+      userId,
       firstName,
       lastName,
       middleName,
@@ -47,9 +48,7 @@ router.post('/login', async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid email or password' });
-    }
-
-    // Create session
+    }    // Create session
     req.session.userId = user._id;
     req.session.isLoggedIn = true;
     
@@ -57,6 +56,7 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
       user: {
         id: user._id,
+        userId: user.userId,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email
