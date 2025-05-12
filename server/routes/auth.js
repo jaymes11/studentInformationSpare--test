@@ -12,16 +12,14 @@ router.post('/register', async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User with this email already exists' });
-    }
-
-    // Create new user
+    }    // Create new user
     const newUser = new User({
       userId,
       firstName,
       lastName,
       middleName,
       email,
-      password // Will be hashed by the pre-save hook in the User model
+      password // Using plain text password (basic login)
     });
 
     await newUser.save();

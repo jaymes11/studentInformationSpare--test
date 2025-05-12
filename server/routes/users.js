@@ -1,6 +1,5 @@
 import express from 'express';
 import User from '../models/User.js';
-import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
@@ -154,6 +153,9 @@ router.put('/profile', checkAuth, async (req, res) => {
 // Delete user (protected route)
 router.delete('/:id', checkAuth, async (req, res) => {
   try {
+    // Log the delete request for debugging
+    console.log(`Delete request for user ID: ${req.params.id} by user: ${req.session.userId}`);
+    
     // Prevent users from deleting their own account through this endpoint
     if (req.params.id === req.session.userId) {
       return res.status(400).json({ message: 'Cannot delete your own account through this endpoint' });
@@ -165,10 +167,11 @@ router.delete('/:id', checkAuth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
+    console.log(`User deleted successfully: ${deletedUser._id}`);
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('Error deleting user:', error);
-    res.status(500).json({ message: 'Error deleting user' });
+    res.status(500).json({ message: 'Error deleting user', error: error.message });
   }
 });
 
