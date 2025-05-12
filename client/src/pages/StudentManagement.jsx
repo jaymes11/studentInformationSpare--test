@@ -113,6 +113,16 @@ const StudentManagement = () => {
 
   const columns = [
     {
+      title: 'Student ID',
+      dataIndex: 'studentId',
+      key: 'studentId',
+      render: (text) => <span>{text}</span>,
+      sorter: (a, b) => a.studentId.localeCompare(b.studentId),
+      sortDirections: ['ascend', 'descend'],
+      defaultSortOrder: 'ascend',
+      width: '15%',
+    },
+    {
       title: 'Name',
       key: 'name',
       render: (_, record) => (

@@ -39,10 +39,11 @@ router.get('/:id', checkAuth, async (req, res) => {
 // Create new student (protected route)
 router.post('/', checkAuth, async (req, res) => {
   try {
-    const { firstName, lastName, middleName,   course, yearLevel } = req.body;
+    const { studentId, firstName, lastName, middleName,   course, yearLevel } = req.body;
     
     // Create new student
     const newStudent = new Student({
+      studentId,
       firstName,
       lastName,
       middleName,
