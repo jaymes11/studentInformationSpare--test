@@ -39,15 +39,15 @@ router.get('/:id', checkAuth, async (req, res) => {
 // Create new student (protected route)
 router.post('/', checkAuth, async (req, res) => {
   try {
-    const { firstName, lastName, middleName, dateOfBirth, gender, course, yearLevel } = req.body;
+    const { firstName, lastName, middleName,   course, yearLevel } = req.body;
     
     // Create new student
     const newStudent = new Student({
       firstName,
       lastName,
       middleName,
-      dateOfBirth,
-      gender,
+      
+      
       course,
       yearLevel
     });
@@ -63,7 +63,7 @@ router.post('/', checkAuth, async (req, res) => {
 // Update student (protected route)
 router.put('/:id', checkAuth, async (req, res) => {
   try {
-    const { firstName, lastName, middleName, dateOfBirth, gender, course, yearLevel } = req.body;
+    const { firstName, lastName, middleName,   course, yearLevel } = req.body;
     
     const updatedStudent = await Student.findByIdAndUpdate(
       req.params.id,
@@ -71,8 +71,8 @@ router.put('/:id', checkAuth, async (req, res) => {
         firstName,
         lastName,
         middleName,
-        dateOfBirth,
-        gender,
+        
+        
         course,
         yearLevel
       },

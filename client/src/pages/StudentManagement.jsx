@@ -122,17 +122,7 @@ const StudentManagement = () => {
       ),
       sorter: (a, b) => a.lastName.localeCompare(b.lastName),
     },
-    {
-      title: 'Date of Birth',
-      dataIndex: 'dateOfBirth',
-      key: 'dateOfBirth',
-      render: (date) => date ? new Date(date).toLocaleDateString() : '-',
-    },
-    {
-      title: 'Gender',
-      dataIndex: 'gender',
-      key: 'gender',
-    },
+    
     {
       title: 'Course',
       dataIndex: 'course',
